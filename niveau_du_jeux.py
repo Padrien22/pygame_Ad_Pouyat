@@ -17,7 +17,7 @@ class Niveaux:
     def dif(self):
         if self.passer_le_niveau == 0:
             self.niveau_1()
-        elif self.passer_le_niveau == 1 and self.score % 5 == 0:
+        elif self.passer_le_niveau == 1 and self.score % 5 == 0 and self.score % 15 != 0:
             self.niveau_2()
         elif self.passer_le_niveau == 2 and self.score % 10 == 0:
             self.niveau_3()
@@ -51,30 +51,40 @@ class Niveaux:
         self.niveau_1()
         self.passer_le_niveau = 1
 
-    def lire_txt(self):
+    def lire_txt(self, sup):
         self.lignes = []
         scrore_total = open('score.txt', "r")
         for ligne in scrore_total:
             self.lignes.append(ligne)
         self.top_score = str(self.lignes[1]).split(",")
-        self.game_score = str(self.lignes[3]).split(",")
+        if not sup:
+            self.game_score = str(self.lignes[3]).split(",")
         self.nom = str(self.lignes[5]).split(",")
 
         for i in range(len(self.top_score)):
             self.top_score[i] = int(self.top_score[i])
-        for i in range(len(self.game_score)):
-            self.game_score[i] = int(self.game_score[i])
-        scrore_total.close()
+        if not sup:
+            for i in range(len(self.game_score)):
+                if self.game_score[0] != "\n":
+                    if i == len(self.game_score):
+                        self.game_score[i] = int((self.game_score[i]).split("\n"))
+                    else:
+                        self.game_score[i] = int(self.game_score[i])
+                else:
+                    self.game_score = []
 
-    def enregistrer(self):
+    def enregistrer(self, sup):
         # enregistrer les score
-        self.lire_txt()
-        print(self.game_score, self.top_score)
+        self.lire_txt(sup)
         # on ajoute a la liste des score de la party le nouveau score a sa place :
         poser = True
         i = 0
         while poser:
-            if i == len(self.game_score):
+            if sup:
+                poser = False
+            elif len(self.game_score) == 0:
+                self.game_score.append(self.score)
+            elif i == len(self.game_score):
                 if self.score != self.game_score[i-1]:
                     self.game_score.append(self.score)
                 poser = False
@@ -85,15 +95,14 @@ class Niveaux:
                 poser = False
             else:
                 i += 1
-
         # on ajoute a la liste des top score le nouveau score a sa place :
         poser = True
         i = 0
         while poser:
             if i == len(self.top_score):
                 poser = False
-            elif self.score > self.top_score[i]:
-                if self.score != self.game_score[i-1]:
+            elif self.score >= self.top_score[i]:
+                if self.score != self.top_score[i]:
                     self.top_score.insert(i, self.score)
                     self.nom.insert(i, self.nom_du_joueur)
                     self.nom.pop(len(self.nom)-1)
@@ -102,11 +111,15 @@ class Niveaux:
             else:
                 i += 1
 
+        i = 0
         # trasformer en texte :
         text_game = ""
-        for i in range(len(self.game_score) - 1):
-            text_game += str(self.game_score[i]) + ","
-        text_game += str(self.game_score[i + 1]) + "\n"
+        if len(self.game_score) != 0:
+            for i in range(len(self.game_score) - 1):
+                text_game += str(self.game_score[i]) + ","
+            text_game += str(self.game_score[i]) + "\n"
+        else:
+            text_game = "\n"
 
         text_top = ""
         for i in range(len(self.top_score) - 1):

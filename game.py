@@ -200,57 +200,32 @@ class Game:
         self.spawn_box(0)
         self.spawn_box(- 200)
 
-    def game_over(self, screen):
-        # quand cette fonction est appelée elle indique la fin de la partie
-        # elle affiche le score
-        # elle propose de jouer une nouvelle parti
+    def reinitialiser(self):
+
+        # nouvelle parti
         self.is_playing = False
 
-        # importer page fin de jeux bouton nouvel partie
-        novel_partie, novel_partie_rect = self.cree_image("assets/new_game_button.png", (200, 100), 200, 400)
-        screen.blit(novel_partie, novel_partie_rect)
-
-        # importer page fin de jeux
-        fin_jeux, fin_jeux_rect = self.cree_image("assets/game_over.png", (200, 100), 200, 100)
-        screen.blit(fin_jeux, fin_jeux_rect)
-
-        # importer page midification au son
-        self.accueil.son_rect.x = 250
-        self.accueil.son_rect.y = 600
-        screen.blit(self.accueil.son_image, self.accueil.son_rect)
-
-        # on enregistre le nouveau score
-        if self.niveaux.sauve_garder:
-            self.niveaux.enregistrer()
-            self.niveaux.sauve_garder = False
-        # afficher le score
-        font = pygame.font.SysFont("monospace", 25)
-        score_text = font.render(f"Score {self.niveaux.nom_du_joueur} : {self.niveaux.score}", True, (250, 250, 250))
-        screen.blit(score_text, (200, 200))
-        # afficher tous les scores
-        font = pygame.font.SysFont("monospace", 20)
-        score_text = font.render(f"Score Party : ", True, (250, 250, 250))
-        screen.blit(score_text, (330, 230))
-        # afficher les top scores
-        score_text = font.render(f"Top Score : ", True, (250, 250, 250))
-        screen.blit(score_text, (170, 230))
-        for i in range(5):
-            if len(self.niveaux.game_score) != 0:
-                score_text = font.render(f"Score : {self.niveaux.game_score[i]}", True, (250, 250, 250))
-                screen.blit(score_text, (330, 260 + i*30))
-            score_text = font.render(f"{self.niveaux.nom[i]} : {self.niveaux.top_score[i]}", True, (250, 250, 250))
-            screen.blit(score_text, (180, 260 + i*30))
         # on met tout à 0
         self.deplacement_du_chat = "en attente"
+
+        # on rememt le chat en position de depard
         self.position_du_chat = 0
+
         self.tombe = False
         self.colision = 0
         self.predre_de_la_vie = 0
         self.player.traject_du_chat = []
         self.colision_true = False
         self.colision_premier = False
+
+        # on remet la bar de vie du joueur
         self.player.stamina = self.player.stamina_max
+
+        # la longuer de la trajectoire revien a l'origine
         self.player.indice = 15
+
+        # remet le niveux a 0
+        self.niveaux.passer_le_niveau = 0
 
         # réinitialiser les objets
         self.all_box = pygame.sprite.Group()
@@ -259,9 +234,60 @@ class Game:
         self.player.rect.x = 210
         self.player.rect.y = 550
 
+    def score_fin(self, screen):
+        # importer page modification du son
+        self.accueil.son_rect.x = 250
+        self.accueil.son_rect.y = 600
+        screen.blit(self.accueil.son_image, self.accueil.son_rect)
+
+        # on enregistre le nouveau score
+        if self.niveaux.sauve_garder:
+            self.niveaux.enregistrer(False)
+            self.niveaux.sauve_garder = False
+
+        # afficher le score
+        font = pygame.font.SysFont("monospace", 25)
+        score_text = font.render(f"Score {self.niveaux.nom_du_joueur} : {self.niveaux.score}", True, (250, 250, 250))
+        screen.blit(score_text, (200, 200))
+
+        # afficher scores
+        font = pygame.font.SysFont("monospace", 20)
+        score_text = font.render(f"Score Party : ", True, (250, 250, 250))
+        screen.blit(score_text, (330, 230))
+        score_text = font.render(f"Top Score : ", True, (250, 250, 250))
+        screen.blit(score_text, (170, 230))
+
+        # afficher les top scores
+        for i in range(5):
+            if i < len(self.niveaux.game_score):
+                score_text = font.render(f"Score : {self.niveaux.game_score[i]}", True, (250, 250, 250))
+                screen.blit(score_text, (330, 260 + i * 30))
+            score_text = font.render(f"{self.niveaux.nom[i]} : {self.niveaux.top_score[i]}", True, (250, 250, 250))
+            screen.blit(score_text, (180, 260 + i * 30))
+
+    def game_over(self, screen):
+        # quand cette fonction est appelée elle indique la fin de la partie
+
+        self.reinitialiser()
+        self.score_fin(screen)
+        self.interaction(screen)
+
+    def interaction(self, screen):
+        # importer page fin de jeux bouton nouvel partie
+        novel_partie, novel_partie_rect = self.cree_image("assets/new_game_button.png", (200, 100), 200, 400)
+        screen.blit(novel_partie, novel_partie_rect)
+
+        # importer page fin de jeux
+        fin_jeux, fin_jeux_rect = self.cree_image("assets/game_over.png", (200, 100), 200, 100)
+        screen.blit(fin_jeux, fin_jeux_rect)
+
+        # acction a menner
         for event in pygame.event.get():
             # quitter le jeu
             if event.type == pygame.QUIT:
+                self.niveaux.game_score = []
+                self.niveaux.enregistrer(True)
+
                 self.running = False
                 pygame.quit()
             # commencer une nouvel party

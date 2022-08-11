@@ -1,6 +1,6 @@
 Top score :
-30,25,20,15,10
+39,30,26,25,20
 score de la party :
-10,8,7,6,5,4,3,2,1,0
+
 nom :
-test1,test2,test3,test4,test5
+Adrien,test1,Adrien,test2,test3

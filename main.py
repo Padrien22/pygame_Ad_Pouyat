@@ -31,7 +31,6 @@ donne_son_nom = False
 
 # jeu lancé
 while game.running:
-
     # metre le son
     game.sound_manager.play('ambiance')
 
@@ -74,6 +73,9 @@ while game.running:
         for event in pygame.event.get():
             # quitter le jeu
             if event.type == pygame.QUIT:
+                game.niveaux.game_score = []
+                game.niveaux.enregistrer(True)
+
                 game.running = False
                 pygame.quit()
 
@@ -132,6 +134,7 @@ while game.running:
             elif event.type == pygame.KEYDOWN:
                 if donne_son_nom:
                     if event.unicode == '\r':
+                        game.start()
                         donne_son_nom = False
                     elif event.unicode == ' ':
                         game.niveaux.nom_du_joueur = ""
