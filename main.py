@@ -22,11 +22,9 @@ background_rect.y = 0
 
 # variable utilisée dans le jeu
 game.running = True
-game.deplacement_du_chat = "en attente"
 sense_du_jouer = True
 aficher_credi = False
 en_pause = False
-donne_son_nom = False
 
 
 # jeu lancé
@@ -56,7 +54,7 @@ while game.running:
             game.accueil.credi_rect.x = 100
             font = pygame.font.SysFont("monospace", 25)
             text_pseudo = font.render(f"Donner un pseudo :", True, (250, 250, 250))
-            if donne_son_nom:
+            if game.donne_son_nom:
                 text_nom = font.render(f"{game.niveaux.nom_du_joueur}", True, (0, 0, 0))
                 pygame.draw.rect(screen, (250, 250, 250), [200, 200, 200, 30])
                 screen.blit(text_nom, (200, 200))
@@ -66,7 +64,10 @@ while game.running:
             screen.blit(text_pseudo, (180, 150))
 
         else:
-            game.game_over(screen)
+            if game.naming:
+                game.donner_pseudo(screen)
+            else:
+                game.game_over(screen)
     if game.running:
         pygame.display.flip()
 
@@ -82,7 +83,6 @@ while game.running:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 x_souris, y_souris = pygame.mouse.get_pos()
                 if game.is_playing:
-
                     if en_pause:
                         if game.rect.collidepoint(event.pos):
                             # metre le jeux en pose
@@ -100,16 +100,16 @@ while game.running:
                         if game.rect.collidepoint(event.pos):
                             # metre le jeux en pose
                             en_pause = True
-                        else:
+                        elif game.deplacement_du_chat == "en attente":
                             # permet de calculer la trajectoire
                             game.deplacement_du_chat = "afficher la trajectoire"
                             game.colision_premier = False
 
                 if not game.is_playing:
                     if 200 < x_souris < 400 and 200 < y_souris < 230:
-                        donne_son_nom = True
+                        game.donne_son_nom = True
                     if game.accueil.plays_rect.collidepoint(event.pos):
-                        donne_son_nom = False
+                        game.donne_son_nom = False
                     # verification pour savoir si la souris clique sur un bouton
                     if game.accueil.plays_rect.collidepoint(event.pos):
                         # mettre le jeu en mode "lancé"
@@ -125,17 +125,18 @@ while game.running:
                             aficher_credi = True
 
             elif event.type == pygame.MOUSEBUTTONUP:
-                game.deplacement_du_chat = "lancer le chat"
-                game.position_du_chat = 0
-                game.tombe = False
-                game.sound_manager.play('saut')
+                if game.is_playing and game.deplacement_du_chat == "afficher la trajectoire":
+                    game.deplacement_du_chat = "lancer le chat"
+                    game.position_du_chat = 0
+                    game.tombe = False
+                    game.sound_manager.play('saut')
                 if game.niveaux.score > 2:
                     game.niveaux.dif()
             elif event.type == pygame.KEYDOWN:
-                if donne_son_nom:
+                if game.donne_son_nom:
                     if event.unicode == '\r':
                         game.start()
-                        donne_son_nom = False
+                        game.donne_son_nom = False
                     elif event.unicode == ' ':
                         game.niveaux.nom_du_joueur = ""
                     elif event.unicode == '\x08':

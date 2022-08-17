@@ -40,6 +40,9 @@ class Game:
         self.rect.x = 540
         self.rect.y = 0  # positions du sprite
 
+        self.naming = False
+        self.donne_son_nom = False
+
         # initialise toutes les variable qui vont être utilisées
         # savoir si on cherche la trajectoire, le chat saute, ou rien
         self.deplacement_du_chat = "en attente"
@@ -142,7 +145,7 @@ class Game:
             self.player.trajectoire(screen, x_souris, y_souris)
             self.colision_true = False
         # si la trajectoire a été decidée alors :
-        if self.deplacement_du_chat == "lancer le chat":
+        if self.deplacement_du_chat == "lancer le chat" or self.deplacement_du_chat == "en attente":
             self.check_collision_pour_les_boite(self.player, self.all_box)
             if self.tombe and self.colision_true:
                 self.player.image = pygame.image.load("assets/chat_dans_boite.png")
@@ -160,6 +163,7 @@ class Game:
                 if 550 != self.player.rect.y and 551 != self.player.rect.y:
                     self.colision += 1
                     self.deplacer_le_jeux()
+                    self.deplacement_du_chat = "en attente"
                 else:
                     # quand on a totalment fini le deplacement du chat, alors on remet tous les parametres a 0
                     self.position_du_chat = 0
@@ -272,14 +276,53 @@ class Game:
         self.score_fin(screen)
         self.interaction(screen)
 
+    def donner_pseudo(self, screen):
+
+        # inscrire et afficher son nom
+        font = pygame.font.SysFont("monospace", 25)
+        text_pseudo = font.render(f"Donner un pseudo :", True, (250, 250, 250))
+        screen.blit(text_pseudo, (180, 150))
+
+        if self.donne_son_nom:
+            text_nom = font.render(f"{self.niveaux.nom_du_joueur}", True, (0, 0, 0))
+            pygame.draw.rect(screen, (250, 250, 250), [200, 200, 200, 30])
+            screen.blit(text_nom, (200, 200))
+        else:
+            pygame.draw.rect(screen, (80, 77, 71), [200, 200, 200, 30])
+
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x_souris, y_souris = pygame.mouse.get_pos()
+                if 200 < x_souris < 400 and 200 < y_souris < 230:
+                    self.donne_son_nom = True
+            elif event.type == pygame.KEYDOWN:
+                if self.donne_son_nom:
+                    if event.unicode == '\r':
+                        self.naming = False
+                        self.donne_son_nom = False
+                    elif event.unicode == ' ':
+                        self.niveaux.nom_du_joueur = ""
+                    elif event.unicode == '\x08':
+                        sup = self.niveaux.nom_du_joueur
+                        self.niveaux.nom_du_joueur = ""
+                        for i in range(len(sup) - 1):
+                            self.niveaux.nom_du_joueur += sup[i]
+                    else:
+                        self.niveaux.nom_du_joueur += event.unicode
+
     def interaction(self, screen):
+
         # importer page fin de jeux bouton nouvel partie
-        novel_partie, novel_partie_rect = self.cree_image("assets/new_game_button.png", (200, 100), 200, 400)
+        novel_partie, novel_partie_rect = self.cree_image("assets/new_game_button.png", (200, 100), 80, 440)
         screen.blit(novel_partie, novel_partie_rect)
 
         # importer page fin de jeux
         fin_jeux, fin_jeux_rect = self.cree_image("assets/game_over.png", (200, 100), 200, 100)
         screen.blit(fin_jeux, fin_jeux_rect)
+
+        # bouton changer nom
+        button_pseudo, button_pseudo_rect = self.cree_image("assets/button.png", (200, 90), 350, 450)
+        screen.blit(button_pseudo, button_pseudo_rect)
 
         # acction a menner
         for event in pygame.event.get():
@@ -291,7 +334,10 @@ class Game:
                 self.running = False
                 pygame.quit()
             # commencer une nouvel party
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x_souris, y_souris = pygame.mouse.get_pos()
+                if button_pseudo_rect.collidepoint(event.pos):
+                    self.naming = True
                 if self.accueil.son_rect.collidepoint(event.pos):
                     # le jeux couper
                     self.accueil.son()
